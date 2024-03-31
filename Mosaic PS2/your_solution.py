@@ -8,8 +8,6 @@ file_path = "training.txt"
 with open(file_path, "r") as file:
     dataset = file.read().splitlines()
 
-# np.random.seed(1)
-
 training_set = []
 test_set = []
 unique_words = list(set(dataset))
@@ -17,8 +15,8 @@ unique_words = np.array(unique_words)
 np.random.shuffle(unique_words)
 unique_words = unique_words.tolist()
 
-test_set = unique_words[:1000]
-training_set = unique_words[1000:]
+test_set = unique_words[:0]
+training_set = unique_words[0:]
 def unigram(corpus):
     unigram_counts = Counter()
 
@@ -38,7 +36,7 @@ def bigram_prob(key, char, bigram_counts):
 
 # Calculate trigram probability
 def trigram_prob(wi_2, wi_1, char, trigram_counts, bigram_counts):
-    return trigram_counts[wi_2 + wi_1 + char] / float(bigram_counts[wi_2][wi_1])
+    return (trigram_counts[wi_2 + wi_1][char] / float(bigram_counts[wi_2][wi_1]))
 
 
 
@@ -108,12 +106,13 @@ def four_gram_guesser(mask, guessed, bigram_counts=bigram_counts_for_trigram,
     trigram_lambda = 0.3
     bigram_lambda = 0.2
     unigram_lambda = 0.1
+
     for char in available:
         char_prob = 0
         for index in range(len(mask)):
             if index == 0 and mask[index] == '_':
                 char_prob += ((fourgram_lambda * fourgram_prob('$', '$', '$', char, fourgram_counts, trigram_counts,bigram_counts))
-                              + (trigram_lambda * (trigram_counts['$' + '$'][char] / float(bigram_counts['$']['$'])))
+                              + (trigram_lambda * trigram_prob('$','$',char, trigram_counts, bigram_counts))
                               + (bigram_lambda * bigram_prob('$', char, bigram_counts))
                               + unigram_lambda * unigram_counts[char] / float(sum(unigram_counts.values())))
 
@@ -121,7 +120,7 @@ def four_gram_guesser(mask, guessed, bigram_counts=bigram_counts_for_trigram,
                 # If the previous word has been guessed, apply trigram
                 if not mask[index - 1] == '_':
                     char_prob += ((fourgram_lambda * fourgram_prob('$', '$', mask[index - 1], char, fourgram_counts, trigram_counts,bigram_counts))
-                                  + (trigram_lambda * (trigram_counts['$' + mask[index - 1]][char] / float(bigram_counts['$'][mask[index - 1]])))
+                                  + (trigram_lambda * trigram_prob('$',mask[index - 1],char, trigram_counts, bigram_counts))
                                   + (bigram_lambda * bigram_prob(mask[index - 1], char, bigram_counts))
                                   + unigram_lambda * unigram_counts[char] / float(sum(unigram_counts.values())))
                 # If the previous word has not been guessed, apply unigram
@@ -133,8 +132,7 @@ def four_gram_guesser(mask, guessed, bigram_counts=bigram_counts_for_trigram,
                 if not mask[index - 1] == '_' and not mask[index-2] == '_':
                     char_prob += ((fourgram_lambda * fourgram_prob('$', mask[index - 2], mask[index - 1], char, fourgram_counts,
                                                                    trigram_counts, bigram_counts))
-                                  + (trigram_lambda * (trigram_counts[mask[index - 2] + mask[index - 1]][char] / float(
-                                bigram_counts[mask[index - 2]][mask[index - 1]])))
+                                  + (trigram_lambda * trigram_prob(mask[index - 2],mask[index - 1],char, trigram_counts, bigram_counts))
                                   + (bigram_lambda * bigram_prob(mask[index - 1], char, bigram_counts))
                                   + unigram_lambda * unigram_counts[char] / float(sum(unigram_counts.values())))
                 # if index-1 is guessed and index-2 is not , apply bigram
@@ -148,13 +146,13 @@ def four_gram_guesser(mask, guessed, bigram_counts=bigram_counts_for_trigram,
                 # if wi_3 , wi_2 , wi_1 all are guessed , apply fourgram
                 if not mask[index - 1] == '_' and not mask[index-2] == '_' and not mask[index-3] == '_':
                     char_prob += ((fourgram_lambda * fourgram_prob(mask[index-3], mask[index - 2], mask[index-1], char, fourgram_counts, trigram_counts,bigram_counts))
-                                  + (trigram_lambda * (trigram_counts[mask[index - 2] + mask[index - 1]][char] / float(bigram_counts[mask[index - 2]][mask[index - 1]])))
+                                  + (trigram_lambda * trigram_prob(mask[index - 2],mask[index - 1],char, trigram_counts, bigram_counts))
                                   + (bigram_lambda * bigram_prob(mask[index - 1], char, bigram_counts))
                                   + unigram_lambda * unigram_counts[char] / float(sum(unigram_counts.values())))
                 # if wi_3 is not guessed but wi_2 and wi_1 are guessed , use trigram
                 elif not mask[index - 1] == '_' and not mask[index-2] == '_':
                     # char_prob += trigram_lambda * trigram_prob(mask[index - 2], mask[index-1], char,trigram_counts, bigram_counts)
-                    char_prob += ((trigram_lambda * (trigram_counts[mask[index - 2] + mask[index - 1]][char] / float(bigram_counts[mask[index - 2]][mask[index - 1]])))
+                    char_prob += ((trigram_lambda * trigram_prob(mask[index - 2],mask[index - 1],char, trigram_counts, bigram_counts))
                                   + (bigram_lambda * bigram_prob(mask[index - 1], char, bigram_counts))
                                   + unigram_lambda * unigram_counts[char] / float(sum(unigram_counts.values())))
                 # if wi_3, wi_2 is not guessed but  wi_1 are guessed , use bigram
