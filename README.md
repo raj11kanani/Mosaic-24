@@ -1,6 +1,6 @@
 
 
-```markdown
+
 # Hangman Game Prediction Using N-Gram Models
 
 ## Overview
