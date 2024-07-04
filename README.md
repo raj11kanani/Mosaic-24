@@ -1,4 +1,4 @@
-Sure, here are the references with actual links included:
+
 
 ```markdown
 # Hangman Game Prediction Using N-Gram Models
